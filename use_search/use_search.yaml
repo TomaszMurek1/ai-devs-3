@@ -3,7 +3,7 @@ description: "alice:useSearch"
 prompts: [file://use_search/use_search.js]
 
 providers:
-  - "openai:chat:gpt-4o"
+  - "openai:chat:gpt-4o-mini"
 
 tests:
   - vars:
@@ -23,7 +23,6 @@ tests:
     assert:
       - type: equals
         value: 0
-
 
   - vars:
       query: "Okay, I need to better understand how the Svelte state management works"
@@ -66,7 +65,7 @@ tests:
     assert:
       - type: equals
         value: 0
-  
+
   - vars:
       query: "Switch the music to the latest single of Nora En Pure"
     assert:
@@ -147,7 +146,3 @@ tests:
     assert:
       - type: equals
         value: 1
-
-
-
-

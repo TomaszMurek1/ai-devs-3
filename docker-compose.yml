@@ -1,0 +1,10 @@
+services:
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app  # Sync local files with the container
+    working_dir: /app
+    command: bash -c "while true; do sleep infinity; done"  # Keep container running
+    tty: true  # Enable interactive terminal
