@@ -16,16 +16,19 @@ export class OpenAIService {
    */
   async completion(
     messages: ChatCompletionMessageParam[],
-    model: string = "gpt-4",
+    model: string = "gpt-4-mini",
     stream: boolean = false,
     jsonMode: boolean = false
-  ): Promise<OpenAI.Chat.Completions.ChatCompletion | AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>> {
+  ): Promise<
+    | OpenAI.Chat.Completions.ChatCompletion
+    | AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+  > {
     try {
       const chatCompletion = await this.openai.chat.completions.create({
         messages,
         model,
         stream,
-        response_format: jsonMode ? { type: "json_object" } : { type: "text" }
+        response_format: jsonMode ? { type: "json_object" } : { type: "text" },
       });
 
       if (stream) {

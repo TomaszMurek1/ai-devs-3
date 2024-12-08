@@ -10,9 +10,12 @@ export class OpenAIService {
 
   async completion(
     messages: ChatCompletionMessageParam[],
-    model: string = "gpt-4",
+    model: string = "gpt-4o-mini",
     stream: boolean = false
-  ): Promise<OpenAI.Chat.Completions.ChatCompletion | AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>> {
+  ): Promise<
+    | OpenAI.Chat.Completions.ChatCompletion
+    | AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>
+  > {
     try {
       const chatCompletion = await this.openai.chat.completions.create({
         messages,

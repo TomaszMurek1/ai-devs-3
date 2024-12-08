@@ -1,5 +1,8 @@
-import type { ChatCompletion, ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { OpenAIService } from './OpenAIService';
+import type {
+  ChatCompletion,
+  ChatCompletionMessageParam,
+} from "openai/resources/chat/completions";
+import { OpenAIService } from "./OpenAIService";
 
 interface ChatConfig {
   messages: ChatCompletionMessageParam[];
@@ -11,12 +14,19 @@ export class AssistantService {
   constructor(private openaiService: OpenAIService) {}
 
   async answer(config: ChatConfig) {
-    const { messages, model = "gpt-4o", stream = false } = config;
+    const { messages, model = "gpt-4o-mini", stream = false } = config;
     const filteredMessages = this.filterValidMessages(messages);
 
     try {
-        const completion = await this.openaiService.completion(filteredMessages, model, stream) as ChatCompletion;
-        return completion.choices[0].message.content || 'There was an error processing your request.';
+      const completion = (await this.openaiService.completion(
+        filteredMessages,
+        model,
+        stream
+      )) as ChatCompletion;
+      return (
+        completion.choices[0].message.content ||
+        "There was an error processing your request."
+      );
     } catch (error) {
       console.error("Error in processChat:", error);
       throw new Error("Failed to process chat. Please try again later.");
@@ -24,28 +34,43 @@ export class AssistantService {
   }
 
   private filterValidMessages(messages: ChatCompletionMessageParam[]) {
-    return messages.filter(msg => msg && typeof msg.content === 'string' && msg.content !== '');
+    return messages.filter(
+      (msg) => msg && typeof msg.content === "string" && msg.content !== ""
+    );
   }
 
-  addSystemMessage(messages: ChatCompletionMessageParam[], relevantContexts: { type: string, content: string }[]): ChatCompletionMessageParam[] {
-    const baseSystemMessage = "You are a helpful assistant who can answer questions based on the knowledge from previous messages and memories.";
+  addSystemMessage(
+    messages: ChatCompletionMessageParam[],
+    relevantContexts: { type: string; content: string }[]
+  ): ChatCompletionMessageParam[] {
+    const baseSystemMessage =
+      "You are a helpful assistant who can answer questions based on the knowledge from previous messages and memories.";
     let systemMessageContent = baseSystemMessage;
 
     if (relevantContexts.length > 0) {
-      systemMessageContent += "\n\n<relevant_context>\n" + 
-        relevantContexts.map(context => {
-          return `<${context.type}>${context.content}</${context.type}>`;
-        }).join('\n') + "\n</relevant_context>";
+      systemMessageContent +=
+        "\n\n<relevant_context>\n" +
+        relevantContexts
+          .map((context) => {
+            return `<${context.type}>${context.content}</${context.type}>`;
+          })
+          .join("\n") +
+        "\n</relevant_context>";
     } else {
-      systemMessageContent += "\n\n<no_context>No relevant context from previous conversations was found. Please respond based on your general knowledge and the current conversation.</no_context>";
+      systemMessageContent +=
+        "\n\n<no_context>No relevant context from previous conversations was found. Please respond based on your general knowledge and the current conversation.</no_context>";
     }
 
-    return [{ role: 'system', content: systemMessageContent }, ...messages];
+    return [{ role: "system", content: systemMessageContent }, ...messages];
   }
 
-  async learn(messages: ChatCompletionMessageParam[]): Promise<false | { title: string, keywords: string[], content: string }> {
+  async learn(
+    messages: ChatCompletionMessageParam[]
+  ): Promise<false | { title: string; keywords: string[]; content: string }> {
     const learningPrompt: ChatCompletionMessageParam[] = [
-      { role: 'system', content: `As an Adaptive Learning Analyzer with human-like memory tagging, your task is to scan AI-User conversations, extract key insights, and generate structured learning data. Your primary objective is to produce a JSON object containing _thoughts, keywords, content, and title based on your analysis, emphasizing memorable and useful tags.
+      {
+        role: "system",
+        content: `As an Adaptive Learning Analyzer with human-like memory tagging, your task is to scan AI-User conversations, extract key insights, and generate structured learning data. Your primary objective is to produce a JSON object containing _thoughts, keywords, content, and title based on your analysis, emphasizing memorable and useful tags.
 
 Core Rules:
 - Always return a valid JSON object, nothing else.
@@ -110,27 +135,33 @@ AI: {
   "keywords": ["light", "speed", "physics", "science"],
   "content": "The speed of light is approximately 299,792,458 meters per second",
   "title": "speed-of-light"
-}`},
-      ...messages.filter(msg => msg.role !== 'system')
+}`,
+      },
+      ...messages.filter((msg) => msg.role !== "system"),
     ];
 
     try {
-      const result = await this.openaiService.completion(learningPrompt, 'gpt-4o', false, true) as ChatCompletion;
+      const result = (await this.openaiService.completion(
+        learningPrompt,
+        "gpt-4o",
+        false,
+        true
+      )) as ChatCompletion;
       const memory = result.choices[0].message.content;
-  
-      if (!memory || memory.toLowerCase() === 'false') {
+
+      if (!memory || memory.toLowerCase() === "false") {
         return false;
       }
-  
+
       try {
         const parsedMemory = JSON.parse(memory);
         console.log(`---\nMemory: ${JSON.stringify(parsedMemory)}\n---`);
         const { title, keywords, content } = parsedMemory;
-  
+
         if (!content) {
           return false;
         }
-  
+
         return { title, keywords, content };
       } catch (parseError) {
         console.error("Error parsing learn result:", parseError);
